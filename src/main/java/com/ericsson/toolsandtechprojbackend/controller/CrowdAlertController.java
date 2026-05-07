@@ -18,9 +18,4 @@ public class CrowdAlertController {
     public List<CrowdAlert> getActiveAlerts() {
         return crowdAlertService.getActiveAlerts();
     }
-
-    @PutMapping("/{id}/resolve")
-    public CrowdAlert resolveAlert(@PathVariable Long id) {
-        return crowdAlertService.resolveAlert(id);
-    }
 }

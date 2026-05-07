@@ -1,5 +1,6 @@
 package com.ericsson.toolsandtechprojbackend.service;
 
+import com.ericsson.toolsandtechprojbackend.dto.CrowdReportResponse;
 import com.ericsson.toolsandtechprojbackend.entity.*;
 import com.ericsson.toolsandtechprojbackend.repository.CrowdAlertRepository;
 import com.ericsson.toolsandtechprojbackend.repository.CrowdReportRepository;
@@ -22,6 +23,12 @@ public class CrowdReportService {
         FestivalArea area = festivalAreaRepository.findById(areaId)
                 .orElseThrow(() -> new RuntimeException("Area not found: " + areaId));
 
+        crowdReportRepository.findTopByAreaOrderBySubmittedAtDesc(area)
+                .ifPresent(latest -> {
+                    if (latest.getLevel() == level)
+                        throw new RuntimeException("Area already reported as " + level);
+                });
+
         CrowdReport report = new CrowdReport();
         report.setArea(area);
         report.setLevel(level);
@@ -36,12 +43,20 @@ public class CrowdReportService {
             alert.setStatus(AlertStatus.ACTIVE);
             alert.setCreatedAt(LocalDateTime.now());
             crowdAlertRepository.save(alert);
+        } else {
+            crowdAlertRepository.findByAreaAndStatus(area, AlertStatus.ACTIVE)
+                    .ifPresent(alert -> {
+                        alert.setStatus(AlertStatus.RESOLVED);
+                        crowdAlertRepository.save(alert);
+                    });
         }
 
         return report;
     }
 
-    public List<CrowdReport> getRecentReports() {
-        return crowdReportRepository.findTop20ByOrderBySubmittedAtDesc();
+    public List<CrowdReportResponse> getRecentReports() {
+        return crowdReportRepository.findTop20ByOrderBySubmittedAtDesc().stream()
+                .map(CrowdReportResponse::new)
+                .toList();
     }
 }
