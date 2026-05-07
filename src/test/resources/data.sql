@@ -13,3 +13,7 @@ INSERT INTO crowd_report (id, area_id, level, note, submitted_at) VALUES
 INSERT INTO crowd_alert (id, area_id, message, status, created_at) VALUES
 (1, 1, 'Main Stage is at full capacity', 'ACTIVE', '2026-05-07T11:00:00'),
 (2, 4, 'First Aid Point is at full capacity', 'RESOLVED', '2026-05-07T09:00:00');
+
+ALTER TABLE festival_area ALTER COLUMN id RESTART WITH 100;
+ALTER TABLE crowd_report ALTER COLUMN id RESTART WITH 100;
+ALTER TABLE crowd_alert ALTER COLUMN id RESTART WITH 100;

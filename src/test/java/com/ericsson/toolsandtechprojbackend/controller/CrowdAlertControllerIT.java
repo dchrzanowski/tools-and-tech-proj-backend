@@ -1,55 +1,42 @@
 package com.ericsson.toolsandtechprojbackend.controller;
 
-import io.restassured.module.mockmvc.RestAssuredMockMvc;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.web.context.WebApplicationContext;
+import org.springframework.test.web.servlet.MockMvc;
 
-import static io.restassured.module.mockmvc.RestAssuredMockMvc.given;
 import static org.hamcrest.Matchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
+@AutoConfigureMockMvc
 @ActiveProfiles("test")
 class CrowdAlertControllerIT {
 
     @Autowired
-    private WebApplicationContext context;
+    private MockMvc mockMvc;
 
-    @BeforeEach
-    void setUp() {
-        RestAssuredMockMvc.webAppContextSetup(context);
+    @Test
+    void getActiveAlerts_returns200() throws Exception {
+        mockMvc.perform(get("/alerts"))
+                .andExpect(status().isOk());
     }
 
     @Test
-    void getActiveAlerts_returns200() {
-        given()
-        .when()
-            .get("/alerts")
-        .then()
-            .statusCode(200);
+    void getActiveAlerts_returnsOnlyActiveAlerts() throws Exception {
+        mockMvc.perform(get("/alerts"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].status", everyItem(equalTo("ACTIVE"))));
     }
 
     @Test
-    void getActiveAlerts_returnsOnlyActiveAlerts() {
-        given()
-        .when()
-            .get("/alerts")
-        .then()
-            .statusCode(200)
-            .body("status", everyItem(equalTo("ACTIVE")));
-    }
-
-    @Test
-    void getActiveAlerts_containsMainStageAlert() {
-        given()
-        .when()
-            .get("/alerts")
-        .then()
-            .statusCode(200)
-            .body("area.name", hasItem("Main Stage"))
-            .body("message", hasItem("Main Stage is at full capacity"));
+    void getActiveAlerts_containsMainStageAlert() throws Exception {
+        mockMvc.perform(get("/alerts"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].area.name", hasItem("Main Stage")))
+                .andExpect(jsonPath("$[*].message", hasItem("Main Stage is at full capacity")));
     }
 }
