@@ -1,5 +1,6 @@
 package com.ericsson.toolsandtechprojbackend.controller;
 
+import com.ericsson.toolsandtechprojbackend.dto.FestivalAreaResponse;
 import com.ericsson.toolsandtechprojbackend.entity.FestivalArea;
 import com.ericsson.toolsandtechprojbackend.service.FestivalAreaService;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,7 @@ public class FestivalAreaController {
     }
 
     @GetMapping
-    public List<FestivalArea> getAllAreas() {
+    public List<FestivalAreaResponse> getAllAreas() {
         return festivalAreaService.getAllAreas();
     }
 }
