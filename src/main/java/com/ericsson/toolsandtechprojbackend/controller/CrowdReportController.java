@@ -2,7 +2,6 @@ package com.ericsson.toolsandtechprojbackend.controller;
 
 import com.ericsson.toolsandtechprojbackend.dto.CrowdReportRequest;
 import com.ericsson.toolsandtechprojbackend.dto.CrowdReportResponse;
-import com.ericsson.toolsandtechprojbackend.entity.CrowdReport;
 import com.ericsson.toolsandtechprojbackend.service.CrowdReportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
