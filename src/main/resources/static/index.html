@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FestivalPulse — Crowd Control</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- ══════════ STATUS BANNER ══════════ -->
+<header id="banner">
+  <div class="banner-brand">
+    <div class="logo-dot"></div>
+    <h1>Festival<span>Pulse</span></h1>
+  </div>
+
+  <div class="banner-stats">
+    <div class="stat-pill" id="stat-total">
+      <span class="val" id="total-areas-val">—</span>
+      <span class="lbl">Total Areas</span>
+    </div>
+    <div class="stat-pill" id="stat-alerts">
+      <span class="val" id="active-alerts-val">—</span>
+      <span class="lbl">Active Alerts</span>
+    </div>
+  </div>
+
+  <div class="system-status">
+    <div class="status-indicator" id="status-dot"></div>
+    <span id="system-status-text">HEALTHY</span>
+  </div>
+
+  <div class="banner-actions">
+    <span id="countdown">10s</span>
+    <button id="refresh-btn" onclick="fetchAreas()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+      </svg>
+      Refresh
+    </button>
+  </div>
+</header>
+
+<!-- ══════════ MAIN LAYOUT ══════════ -->
+<div id="main">
+
+  <!-- Festival Map -->
+  <div id="col-map" class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Festival Map — Area Overview</span>
+      <button class="add-area-btn" onclick="openAddAreaModal()">+ Add Area</button>
+    </div>
+    <div id="area-grid"></div>
+  </div>
+
+  <!-- Bottom row: Alerts + Feed side by side -->
+  <div style="display:flex;gap:16px;align-items:flex-start">
+
+    <div id="col-alerts" class="panel" style="flex:1">
+      <div class="panel-header">
+        <span class="panel-title">⚠ Active Alerts</span>
+        <span class="panel-badge" id="alerts-badge">0</span>
+      </div>
+      <div id="alerts-list"></div>
+    </div>
+
+    <div id="col-feed" class="panel" style="flex:1">
+      <div class="panel-header">
+        <span class="panel-title">&#9654; Recent Reports</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="panel-title" style="font-size:11px">Last 5 reports</span>
+          <button class="add-area-btn" onclick="openReportModal()">+ Submit Report</button>
+        </div>
+      </div>
+      <div id="feed-list">
+        <div class="feed-empty">No reports yet. Be the first to submit!</div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Tooltip -->
+<div class="area-tooltip" id="area-tooltip">
+  <div class="tt-name" id="tt-name"></div>
+  <div class="tt-type" id="tt-type"></div>
+  <div class="tt-location" id="tt-location"></div>
+  <div class="tt-desc" id="tt-desc"></div>
+  <div class="tt-divider"></div>
+  <div class="tt-note" id="tt-note"></div>
+  <div class="tt-time" id="tt-time"></div>
+</div>
+
+<!-- Area Reports Modal -->
+<div class="modal-backdrop" id="area-reports-backdrop" onclick="closeAreaReportsModal()"></div>
+<div class="modal" id="area-reports-modal" role="dialog" aria-modal="true">
+  <div class="modal-header">
+    <div>
+      <div class="modal-title" id="area-reports-title"></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:3px;font-family:'JetBrains Mono',monospace" id="area-reports-meta"></div>
+    </div>
+    <button class="modal-close" onclick="closeAreaReportsModal()" aria-label="Close">&times;</button>
+  </div>
+  <div style="padding:8px 12px;max-height:400px;overflow-y:auto" id="area-reports-list"></div>
+</div>
+
+<!-- Submit Report Modal -->
+<div class="modal-backdrop" id="report-modal-backdrop" onclick="closeReportModal()"></div>
+<div class="modal" id="submit-report-modal" role="dialog" aria-modal="true">
+  <div class="modal-header">
+    <h2 class="modal-title">&#9998; Submit Report</h2>
+    <button class="modal-close" onclick="closeReportModal()" aria-label="Close">&times;</button>
+  </div>
+  <form class="modal-body" id="report-form" onsubmit="submitReport(event)">
+    <div class="form-group">
+      <label class="form-label" for="area-select">Area <span class="req">*</span></label>
+      <select id="area-select" class="form-select" onchange="checkFormValid()">
+        <option value="">— Select area —</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Crowd Level <span class="req">*</span></label>
+      <div class="radio-group">
+        <label class="radio-opt low-opt">
+          <input type="radio" name="crowd-level" value="LOW" onchange="checkFormValid()" /> Low
+        </label>
+        <label class="radio-opt med-opt">
+          <input type="radio" name="crowd-level" value="MEDIUM" onchange="checkFormValid()" /> Med
+        </label>
+        <label class="radio-opt full-opt">
+          <input type="radio" name="crowd-level" value="FULL" onchange="checkFormValid()" /> Full
+        </label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="note-input">Note <span class="req">*</span></label>
+      <textarea id="note-input" class="form-textarea" placeholder="Describe the situation…" maxlength="200" oninput="checkFormValid()"></textarea>
+    </div>
+    <div class="form-error" id="form-error"></div>
+    <div class="form-success" id="form-success"></div>
+    <div class="modal-actions">
+      <button type="button" class="modal-cancel-btn" onclick="closeReportModal()">Cancel</button>
+      <button type="submit" class="submit-btn" id="submit-btn" disabled style="flex:1">Submit Report</button>
+    </div>
+  </form>
+</div>
+
+<!-- Add Area Modal -->
+<div class="modal-backdrop" id="modal-backdrop" onclick="closeAddAreaModal()"></div>
+<div class="modal" id="add-area-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal-header">
+    <h2 class="modal-title" id="modal-title">Add New Area</h2>
+    <button class="modal-close" onclick="closeAddAreaModal()" aria-label="Close">&times;</button>
+  </div>
+  <form class="modal-body" id="add-area-form" onsubmit="submitNewArea(event)">
+    <div class="form-group">
+      <label class="form-label" for="new-area-name">Area Name <span class="req">*</span></label>
+      <input type="text" id="new-area-name" class="form-select" placeholder="e.g. South Stage" maxlength="60"
+             oninput="checkAreaFormValid()" autocomplete="off" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="new-area-type">Area Type <span class="req">*</span></label>
+      <select id="new-area-type" class="form-select" onchange="checkAreaFormValid()">
+        <option value="">— Select type —</option>
+        <option value="STAGE">Stage / Performance</option>
+        <option value="FOOD_BEVERAGE">Food &amp; Beverage</option>
+        <option value="ENTRY_EXIT">Entry / Exit</option>
+        <option value="PARKING">Parking</option>
+        <option value="MEDICAL">Medical / First Aid</option>
+        <option value="VIP">VIP / Hospitality</option>
+        <option value="VENDOR">Vendor / Market</option>
+        <option value="FACILITIES">Facilities</option>
+        <option value="SECURITY">Security</option>
+        <option value="OTHER">Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="new-area-location">Location <span class="req">*</span></label>
+      <input type="text" id="new-area-location" class="form-select" placeholder="e.g. North field, near main entrance"
+             maxlength="100" oninput="checkAreaFormValid()" autocomplete="off" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="new-area-desc">Description</label>
+      <textarea id="new-area-desc" class="form-textarea" placeholder="Brief description of this area's purpose…"
+                maxlength="200"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="modal-cancel-btn" onclick="closeAddAreaModal()">Cancel</button>
+      <button type="submit" class="submit-btn" id="add-area-submit-btn" disabled style="flex:1">Create Area</button>
+    </div>
+  </form>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
